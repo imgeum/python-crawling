@@ -1,61 +1,61 @@
+#-*- coding: utf-8 -*-
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime
 import csv
 
+
 def get_html(url):
-    _html = ""
+    _html_list = ""
     resp = requests.get(url)
     
     if resp.status_code == 200:
         _html = resp.text
-    else:
-        return False
     
     return _html
 
 
-def get_comment_list(html):
+def get_cmt_dict_list(html):
     soup = BeautifulSoup(html, 'html5lib')
     reple_items = soup.find('div', {'class':'score_result'}).find_all('li')
-    comment_list = []
+    cmt_dict_list = []
 
     for item in reple_items:
-        star_score = item.find('em').text
-        comment = item.find('p')
-        date = item.find_all('em')[2].text
-        '''
-        like = item.find_all('span')[4].text
-        dislike = item.find_all('span')[6].text
-        '''
-        comment_data_dict = {'star':star_score, 'cmt':comment, 'date':date}
-        comment_list.append(comment_data_dict)
+        star_score = int(item.find('em').text)
+        cmt = item.find('p').text
+        date = datetime.strptime(item.find_all('em')[2].text, '%Y.%m.%d %H:%M').date()
+        #like = item.find_all('span')[4].text
+        #dislike = item.find_all('span')[6].text
+        
+        cmt_dict = {'star':star_score, 'date':date, 'cmt':cmt}
+        cmt_dict_list.append(cmt_dict)
 
-    return comment_list
+    return cmt_dict_list
 
-def save_to_csv(comment_list):
-    file = open('movie_comment.csv', 'w', encoding='utf-8', newline='')
-    csvfile = csv.writer(file)
-    for row in comment_list:
-        csvfile.writerow(row)
-    file.close
 
 def main():
     # Movie Captain Marvel
-    comment_list = []
-
+    cmt_dict_list_data = []
+    csv_columns=['star', 'date', 'cmt']
     base_url = 'https://movie.naver.com//movie/bi/mi/pointWriteFormList.nhn?code=132623&type=after&page='
-    page_num = 1
-    url = base_url + str(page_num)
-
-    while get_html(url):
-        html = get_html(url)
-        comment_list_item = get_comment_list(html)
-        comment_list.append(comment_list_item)
-        print(str(page_num) + ' page ')
-        page_num += 1
+    
+    # 3607
+    for page_num in range(1, 10):
+        html = get_html(base_url + str(page_num))
+        cmt_dict_list = get_cmt_dict_list(html)
+        cmt_dict_list_data.extend(cmt_dict_list)
+        print(str(page_num) + 'page')
         url = base_url + str(page_num)
 
-    save_to_csv(comment_list)
-        
+    try:
+        with open('./movie_comment.csv', 'w', encoding='utf-8') as file:
+            writer = csv.DictWriter(file, fieldnames=csv_columns)
+            writer.writeheader()
+            for data in cmt_dict_list_data:
+                writer.writerow(data)
+    except IOError:
+        print("IO Error")
+
+
 if __name__ == '__main__':
     main()

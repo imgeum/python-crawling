@@ -33,6 +33,17 @@ def get_cmt_dict_list(html):
     return cmt_dict_list
 
 
+def get_cmt(html):
+    soup = BeautifulSoup(html, 'html5lib')
+    reple_items = soup.find('div', {'class':'score_result'}).find_all('li')
+    cmt_list = []
+
+    for item in reple_items:
+        cmt = item.find('p').text
+        cmt_list.append(cmt)
+    
+    return cmt_list
+
 def main():
     # Movie Captain Marvel
     cmt_dict_list_data = []

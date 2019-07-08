@@ -1,0 +1,162 @@
+
+
+
+<!DOCTYPE HTML>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+    <title>네이버 만화</title>
+    <link rel="shortcut icon" href="https://ssl.pstatic.net/static/comic/favicon/webtoon_favicon_32x32.ico" type="image/x-icon">
+    
+			
+				<link rel="stylesheet" style="text/css" href="/css/comic/common_20190627181237.css">
+			
+		
+    <script type="text/javascript" src="/javascript/jquery-1.12.4.min.js"></script>
+    <script type="text/javascript">
+        document.domain = "naver.com";
+    </script>
+</head>
+<body>
+<div id="cbox_module"></div>
+<script type="text/javascript">
+    (function(htOption) {
+        window.__htCboxOption = htOption;
+        var s = document.createElement('script');
+        s.type = 'text/javascript';
+        s.charset = 'utf-8';
+        s.src = htOption.sDomain + '/js/cbox.core.js?v=' + Math.floor(new Date().getTime() / 1200000);
+        (document.head || document.getElementsByTagName("head")[0]).appendChild(s);
+    })({
+
+        sDomain : 'https://ssl.pstatic.net/static.cbox',
+        sApiDomain : 'https://apis.naver.com/commentBox/cbox3',
+
+        bLogin : true,
+        sTicket : 'comic',
+        sTemplateId : 'webtoon',
+        sObjectId : '703852_68',
+        sLikeItId: '703852_68',
+        sHelp : 'up',
+        sLanguage : 'ko',
+        sCountry : 'KR',
+        sPageType : 'default',
+        nPageSize : 15,
+        nIndexSize : 10,
+        sCssId : 'comic',
+        sCountType :'total',
+        sAuthType : 'naver',
+        htMessage : {
+            alert: {
+                liked : '이 댓글을 좋아합니다.',
+                disliked : '이 댓글을 싫어합니다.',
+                cant_like_own_comment : '본인의 댓글에는 \'좋아요\'를 하실 수 없습니다.',
+                cant_dislike_own_comment : '본인의 댓글에는 \'싫어요\'를 하실 수 없습니다.'
+            },
+            template : {
+                comment : '의견쓰기',
+                sort_new : '전체댓글',
+                write_long_placeholder : '주제와 무관한 댓글이나 스포일러, 악플은 경고조치 없이 삭제되며 징계 대상이 될 수 있습니다.',
+                like : '좋아요',
+                like_comment : '이 댓글을 좋아합니다.',
+                dislike : '싫어요',
+                dislike_comment : '이 댓글을 싫어합니다.',
+                list_empty : '이번 화의 댓글이 아직 없습니다.<br>제일 먼저 댓글을 남겨주세요.',
+                list_empty_best : '이번 화의 BEST댓글이 아직 없습니다.<br>전체댓글에서 \'좋아요\'를 눌러 BEST 댓글을 만들어주세요.',
+                help_contents : '\'좋아요\' 투표수가 높은 댓글입니다.</p><strong class="u_cbox_info_title"><span class="u_cbox_ico_help"></span>BEST댓글 운영 기준</strong><p class="u_cbox_info_txt">\'좋아요\'의 일정 비율 이상 \'싫어요\'를 받게 되는 경우<br>베스트댓글에서 자동 제외됩니다.<br><br>타인에게 불쾌감을 주거나 작가의 요청을 받은 경우도<br>베스트댓글에서 제외될 수 있습니다.</p>'
+            }
+        },
+        htEventHandler : {
+            afterList : function(oEvent) {
+                if (oEvent.oJson.success) {
+                    checkExposurePageNavigation(oEvent.oJson.result);
+                }
+                resizeIframeHeight();
+            },
+            afterCreate : function() {
+                resizeIframeHeight();
+            },
+            afterRemove : function() {
+                resizeIframeHeight();
+            }
+        },
+        htErrorHandler : {
+            '5005' : function(oJon) {
+                alert('\'좋아요\'한 댓글입니다.\n 취소 후 수정해주세요.');
+            },
+            '5007' : function(oJon) {
+                alert('\'싫어요\'한 댓글입니다.\n 취소 후 수정해주세요.');
+            }
+        },
+        fCommentItemHandler : function(oComment) {
+
+            if (oComment.userName === oComment.maskedUserId) {
+                oComment.userName = '';
+            }
+
+            if (oComment.categoryImage) {
+                oComment.categoryImage = oComment.categoryImage.replace('http://dthumb.phinf.naver.net', 'https://dthumb-phinf.pstatic.net');
+            }
+
+        },
+        fLoginHandler : function() {
+            
+            jQuery.ajax({
+                url : '/api/checkUserLoggedIn.nhn',
+                dataType : "json",
+                success : function(result){
+                    window.__htCboxOption.bLogin = result.isLoggedIn;
+                    if(window.__htCboxOption.bLogin == false){
+                        if (confirm('로그인을 하신 후 이용해 주시기 바랍니다.')) {
+                            var sNaverLoginUrl = 'https://nid.naver.com/nidlogin.login?mode=form&url=';
+                            var elCommentIframe = parent.document.getElementById("commentIframe");
+
+                            if (elCommentIframe) {
+                                parent.document.location.href = sNaverLoginUrl + encodeURIComponent(parent.document.location.href);
+                            } else {
+                                document.location.href = sNaverLoginUrl + encodeURIComponent(document.location.href);
+                            }
+                        }
+                    } else {
+                        refresh(window.__htCboxOption.bLogin,window.__htCboxOption.sObjectId);
+                    }
+                }
+            });
+        }
+    });
+
+    function refresh(bLogin,sObjectId){
+        window.__htCboxOption.sObjectId = sObjectId;
+        window.__htCboxOption.bLogin = bLogin;
+        if(window.cbox == null){
+            return;
+        }
+        window.cbox.Core.init(window.__htCboxOption);
+    }
+
+    function checkExposurePageNavigation(oResult) {
+
+        if (oResult.count.exposeCount == 0) {
+            jQuery('.u_cbox_paginate').hide();
+            return;
+        }
+
+        if (oResult.sort == 'BEST') {
+            jQuery('.u_cbox_paginate').hide();
+        } else {
+            jQuery('.u_cbox_paginate').show();
+        }
+
+    }
+
+    function resizeIframeHeight() {
+        var elCommentIframe = parent.document.getElementById("commentIframe");
+        if (elCommentIframe) {
+            elCommentIframe.style.height = document.getElementById('cbox_module').offsetHeight + 'px';
+        }
+    }
+
+</script>
+</body>
+</html>

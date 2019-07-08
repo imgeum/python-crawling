@@ -1,0 +1,785 @@
+<script type="text/javascript">
+		document.domain = "naver.com";
+	</script> 
+<script src="/aggregate/javascript/release/comic_detailscroll_20190627181237.js" type="text/javascript"></script> 
+<script src="/aggregate/javascript/release/comic_gnb_20190627181237.js" type="text/javascript"></script> 
+<script type="text/javascript">
+        var gnb_option = {
+            gnb_service : "comic",
+            gnb_logout :  encodeURIComponent(window.location.href),
+            gnb_login :   encodeURIComponent(window.location.href),
+            gnb_template : "gnb_utf8",
+            gnb_brightness : 1,
+            gnb_item_hide_option: 0
+        };
+    </script> 
+<script charset="utf-8" src="https://ssl.pstatic.net/static.gn/templates/gnb_utf8.nhn?20190627181237" type="text/javascript"></script> 
+<script type="text/javascript">
+    function loadImageEvent(element){
+        if ( element ) {
+            if( element.width && element.width > 900 ) {
+                element.width = 900;
+            }
+        }
+    }
+</script> 
+<script id="tplProduct" type="text/template">
+<li>
+	<a href="{=pcUrl}" class="thmb" target="_blank" onclick="nclk_v2(event,'prd.thum');">
+		<span class="mask"></span>
+		<img src="{js convertProductThumbnailUrl(=pcThumbnailUrl)}" width="50" height="{if productTypeCode == 'EBOOK'}75{elseif productTypeCode == 'BOOK'}75{else}50{/if}" alt="">
+	</a>
+	<span class="info">
+		<a href="{=pcUrl}" class="tit" target="_blank" onclick="nclk_v2(event,'prd.title');">{=productName}</a>
+		{if productTypeCode == 'EBOOK'}
+			<span class="pay">{=priceText}</span>
+		{elseif productTypeCode == 'BOOK'}
+			<span class="etc">{=sellerName}</span>
+		{elseif productTypeCode == 'CHARACTER'}
+			<span class="pay">{=priceText}</span>
+		{elseif productTypeCode == 'MUSIC'}
+			<span class="etc">{=sellerName}</span>
+		{elseif productTypeCode == 'APP'}
+			<span class="etc">{=genreName}</span>
+		{/if}
+	</span>
+</li>
+</script> 
+<script type="text/javascript">
+var product = {
+		
+		nPage : 1,
+		nTotalPage : 1,
+		sProductTypeCode : '',
+		
+		nTabPage : 1,
+		nProductTabCount : 0,
+		nTabMenuAreaWidth : 190,
+		nTabMenuExposureCount : 3,
+
+		// 초기화
+		init : function() {
+			
+			this.nProductTabCount = $A($$('#productTab li')).length();
+			if (this.nProductTabCount <= this.nTabMenuExposureCount) {
+				$Element('productTabNext').addClass('dim');
+			}
+			
+			this._displayProductList(this.sProductTypeCode, 1);
+			
+			$Fn(this._previousTab, this).attach($("productTabPrev"), "click");
+			$Fn(this._nextTab, this).attach($("productTabNext"), "click");
+			$Fn(this._previousPage, this).attach($("productPrevPage"), "click");
+			$Fn(this._nextPage, this).attach($("productNextPage"), "click");
+			
+			$A($$('.productTabLinkClass')).forEach(function(value) {
+				$Fn(function(e) {
+					e.stop();
+					var productTypeCode = value.id.replace('product', '');
+					product._selectTab(productTypeCode);
+				}, this).attach(value, 'click');
+			});
+		},
+		
+		// 이전탭
+		_previousTab : function(e) {
+			e.stop();
+			if ($Element('productTabPrev').hasClass('dim') == false) {
+				this._moveTab(this.nTabPage - 1);
+			}
+		},
+		
+		// 다음탭
+		_nextTab : function(e) {
+			e.stop();
+			if ($Element('productTabNext').hasClass('dim') == false) {
+				this._moveTab(this.nTabPage + 1);
+			}
+		},
+			
+		// 탭메뉴 이동
+		_moveTab : function(tabPage) {
+			
+			if (tabPage > 1) {
+				$Element('productTabPrev').removeClass('dim');
+			} else {
+				$Element('productTabPrev').addClass('dim');
+			}
+			
+			if (tabPage * this.nTabMenuExposureCount >= this.nProductTabCount) {
+				$Element('productTabNext').addClass('dim');
+			} else {
+				$Element('productTabNext').removeClass('dim');
+			}
+			
+			var nMarginLeft = (tabPage - 1) * this.nTabMenuAreaWidth * -1;
+			$Element('productTab').css('margin-left', nMarginLeft + 'px');
+
+			var nFirstTabIndex = (tabPage - 1) * this.nTabMenuExposureCount;
+			$ElementList($$('#productTab li')).removeClass('on');
+			$Element($A($$('#productTab li')).get(nFirstTabIndex)).addClass('on');
+			
+			var productTypeCode = $A($$('#productTab li')).get(nFirstTabIndex).id;
+			this._displayProductList(productTypeCode, 1);
+			
+			this.nTabPage = tabPage;
+		},
+		
+		// 이전페이지
+		_previousPage : function(e) {
+			e.stop();
+			
+			if (this.nTotalPage > 1) {
+				if (this.nPage > 1) {
+					this._displayProductList(this.sProductTypeCode, this.nPage - 1);
+				} else {
+					this._displayProductList(this.sProductTypeCode, this.nTotalPage);
+				}
+			}
+		},
+		
+		// 다음페이지
+		_nextPage : function(e) {
+			e.stop();
+			if (this.nTotalPage > 1) {
+				if (this.nPage < this.nTotalPage) {
+					this._displayProductList(this.sProductTypeCode, this.nPage + 1);
+				} else {
+					this._displayProductList(this.sProductTypeCode, 1);
+				}
+			}
+		},
+		
+		// 탭선택
+		_selectTab : function(productTypeCode) {
+			$ElementList($$('#productTab li')).removeClass('on');
+			
+			if (productTypeCode != '') {
+				$Element(productTypeCode).addClass('on');
+			} else {
+				$Element($$.getSingle('.cate_total')).addClass('on');
+			}
+			
+			this._displayProductList(productTypeCode, 1);
+		},
+		
+		// 파생상품 리스트 노출
+		_displayProductList : function(productTypeCode, page) {
+			new $Ajax('/webtoon/productListJson.nhn', {
+				type : 'xhr',
+				method : 'get',
+				onload : function(oRes) {
+					var oJson = oRes.json();
+					product.nTotalPage = oJson.totalPage;
+					var productList = oJson.productList;
+					
+					$Element('productList').empty();
+					
+					$A(productList).forEach(function(value) {
+						if (value.productName.length > 26) {
+							value.productName = value.productName.substring(0, 25) + '...';
+						}
+						$Element('productList').appendHTML($Template("tplProduct").process(value));
+					});
+					
+					if ($$('#productList li')[0]) {
+						$Element($$('#productList li')[0]).addClass('first');
+					}
+
+					$Element('productListPage').html('<strong>' + page + '</strong>/' + product.nTotalPage);
+
+					product.nPage = page;
+					product.sProductTypeCode = productTypeCode;
+				}
+			}).request({
+				titleId : 703852,
+				productTypeCode : productTypeCode,
+				page : page
+			});
+		}
+};
+
+function convertProductThumbnailUrl(sThumbnailUrl) {
+	if (sThumbnailUrl.substr(0,4).toLowerCase() == "http") {
+		return sThumbnailUrl;
+	}
+	
+	return 'https://image-comic.pstatic.net' + sThumbnailUrl;
+}
+
+$Fn(function() {
+		product.init();
+}).attach(document, "domready");
+</script> 
+<script>
+function goRollingLink() {
+	
+	
+		document.location = "https://comic.naver.com/webtoon/list.nhn?titleId=729255";
+	
+}
+</script> 
+<script type="text/javascript">
+(function(oData) {
+    window.__oLikeItData = oData;
+    var s = document.createElement("script");
+    s.type = "text/javascript";
+    s.charset = "utf-8";
+    s.src = oData.domain + "/static/js/likeIt.v2.desktop.init.js?v="+ (new Date()).toDateString().replace(/\s/g,"");
+    (document.head || document.getElementsByTagName("head")[0]).appendChild(s);
+})({
+    serviceId : "COMIC"
+    , displayId : "COMIC"
+    , contentId : "703852_68"
+    , domain :"https://comic.like.naver.com"
+    , lang : "ko"
+    , viewType : ""
+    
+    , countCallbackYn : "Y"
+    , rparam : encodeURIComponent("deviceCode=PC")
+    
+ });
+</script> 
+<script type="text/javascript">
+	function checkServiceCode(type, serviceCode, no){
+		var hrefUrl = null;
+		if("subTitle" == type) {
+			hrefUrl = "/webtoon/detail.nhn?titleId=703852&no="+no+"&weekday=tue";
+		} else if("remoteCtr" == type) {
+			hrefUrl = "/webtoon/detail.nhn?titleId=703852&no="+no;
+		}
+
+		if("S00" == serviceCode) {
+		    location.href = hrefUrl;
+		} else {
+		    this.alert("게시 보류 중인 콘텐츠 입니다.");
+		}
+		return false;
+	}
+</script> 
+<script language="javascript" type="text/javascript">
+	var naver = naver || {};
+	naver.comic = naver.comic || {};
+
+	// 단행본의 페이지플립 컴포넌트 저장 객체
+	var oPageFlip = null;
+
+	var navi_init = {
+		"leftend":false,
+		"rightend":true,
+		"nbooksId":'313449',
+		"list":[
+				
+				
+				{"link":"/webtoon/detail.nhn?titleId=703852&no=65&weekday=tue",
+				 "thumbnail":"https://shared-comic.pstatic.net/thumb/webtoon/703852/65/thumbnail_202x120_a72c0570-0051-43f4-834c-12d16da65635.jpg",
+				 "chapter":"65",
+				 "title":"65",
+				 "id":"65"
+				},
+				
+				{"link":"/webtoon/detail.nhn?titleId=703852&no=66&weekday=tue",
+				 "thumbnail":"https://shared-comic.pstatic.net/thumb/webtoon/703852/66/thumbnail_202x120_7a00fd5a-d368-44ce-b739-34528b89d5d7.jpg",
+				 "chapter":"66",
+				 "title":"66",
+				 "id":"66"
+				},
+				
+				{"link":"/webtoon/detail.nhn?titleId=703852&no=67&weekday=tue",
+				 "thumbnail":"https://shared-comic.pstatic.net/thumb/webtoon/703852/67/thumbnail_202x120_5d0c1b57-eb23-4f06-b06b-a0774d2e29a3.jpg",
+				 "chapter":"67",
+				 "title":"67",
+				 "id":"67"
+				},
+				
+				{"link":"/webtoon/detail.nhn?titleId=703852&no=68&weekday=tue",
+				 "thumbnail":"https://shared-comic.pstatic.net/thumb/webtoon/703852/68/thumbnail_202x120_32525c93-0ab9-4be3-a1fb-ae0668c16731.jpg",
+				 "chapter":"68",
+				 "title":"68",
+				 "id":"68"
+				}
+			   ]
+	};
+
+	
+	naver.comic.isFlashAlone = false;
+	
+	naver.comic.sPreviousArticleUrl = "/webtoon/detail.nhn?titleId=703852&no=67&weekday=tue";
+	
+	
+
+	var isLogin = false;
+	var currentLevelName = 'WEBTOON';
+	var sCommentUrl = '' + '/comment/comment.nhn?titleId=703852&no=68';
+
+    var artistData = [
+       
+          {"artistId" : 316348,
+           "nickname": '남수',
+           "blogUrl" : 'https://blog.naver.com/nam_soo_'
+          }
+          
+       
+    ];
+
+    var newButtonObject = [
+		{"button" : "starScoreMenu_1", "target" : "pointSelectOption" },
+		{"button" : "copyUrlActionMenu", "target" : "layerAddressBox","showHandler":copyThisURL },
+		{"button" : "starScoreMenu_2", "target" : "pointSelectOption_2"  }
+	];
+
+	function copyThisURL ()	{
+		if ( window.clipboardData) {
+ 			$Ajax("https://" + location.hostname + "/webtoon/copyUrl.nhn").request({"titleId":"703852","no":"68"});
+ 			window.clipboardData.setData('Text','https://' + location.hostname + '/webtoon/detail.nhn?titleId=703852&no=68' );
+ 			return true;
+		} else {
+			alert('복사 기능을 지원하지 않는 브라우저입니다.');
+			return false;
+		}
+	}
+    var actionRunner;
+
+    WebtoonArtistActionRunner = $Class ({
+        $init : function(titleId) {
+            this._titleId = titleId;
+        },
+
+        addFavoriteWebtoon : function (titleId) {
+	    	var width = (screen.width / 2) - 800;
+			var height = (screen.height / 2) - 510;
+			var favoriteUrl = null;
+			var addUrl = "https://" + location.hostname + "/mypage/favoriteTitleAdd.nhn?titleId="+titleId;
+			var removeUrl = "https://" + location.hostname + "/mypage/favoriteTitleRemove.nhn?titleId="+titleId;
+			if($Element(jindo.$$.getSingle('.book_maker')).hasClass('on')) {
+				favoriteUrl = removeUrl;
+			} else {
+				favoriteUrl = addUrl;
+			}
+
+			if(isLogin) {
+			    var favoritePopup = window.open('', 'addFavorite', 'directories=no,toolbar=no,scrollbars=yes,width=370,height=180,top=' + height + ',left=' + width);
+			    favoritePopup.location.href = favoriteUrl;
+			} else {
+			    location.href = "/common/login.nhn?url=" + encodeURIComponent(location.href);
+			}
+	    },
+
+		artistForArtistTitle : function(element) {
+			$Element("author_layer_inner").html("");
+			$Element("author_layer").css("border", "");
+			$Element("author_layer_inner").css("border", "1px solid #b6b6b6");
+			if(artistData.length == 0) {
+				var liElement = new $Element("<li>");
+				var spanElement = new $Element("<span>");
+				spanElement.html("작가의 다른 작품이 없습니다.");
+				liElement.append(spanElement);
+				$Element("author_layer_inner").append(liElement);
+				artistLayer.show(element);
+			} else if(artistData.length == 1) {
+				location.href = "/artistTitle.nhn?artistId=" + artistData[0].artistId;
+			} else {
+				for (var i = 0; i < artistData.length; i++) {
+					var liElement = new $Element("<li>");
+					var aElement = new $Element("<a>");
+					aElement.attr("href", "/artistTitle.nhn?artistId=" + artistData[i].artistId);
+					aElement.html("&lt;" + artistData[i].nickname + "&gt;의 다른작품");
+					liElement.append(aElement);
+					$Element("author_layer_inner").append(liElement);
+					if (i==9) {
+						$Element("author_layer").css("border", "1px solid #b6b6b6");
+						$Element("author_layer_inner").css("border", "0");
+					}
+				}
+				artistLayer.show(element);
+			}
+			return false;
+		},
+
+        artistForBlogUrl : function(element) {
+        	if(artistData.length == 1 && $S(artistData[0].blogUrl).trim().$value() != '') {
+        		window.open(artistData[0].blogUrl, '_blank');
+        		return false;
+        	} else {
+	        	$Element("author_layer_inner").html("");
+	        	$Element("author_layer").css("border", "");
+	        	$Element("author_layer_inner").css("border", "1px solid #b6b6b6");
+                var blogCount = 0;
+	            if (currentLevelName == 'WEBTOON') {
+
+	                for (var i = 0; i < artistData.length; i++) {
+	                    if ($S(artistData[i].blogUrl).trim().$value() != '') {
+		                    var liElement = new $Element("<li>");
+		                    var aElement = new $Element("<a>");
+		                    aElement.attr("href", artistData[i].blogUrl);
+		                    aElement.attr("target", "_blank");
+		                    aElement.html("&lt;" + artistData[i].nickname + "&gt;의 블로그")
+
+		                    liElement.append(aElement);
+		                    $Element("author_layer_inner").append(liElement);
+		                    blogCount++;
+
+		                    if (i==9) {
+		                        $Element("author_layer").css("border", "1px solid #b6b6b6");
+		                        $Element("author_layer_inner").css("border", "0");
+		                    }
+	                    }
+	                }
+	                if (blogCount == 0) {
+	                    var liElement = new $Element("<li>");
+	                    var aElement = new $Element("<a>");
+	                    aElement.html("등록된 블로그가 없습니다.");
+
+	                    liElement.append(aElement);
+	                    $Element("author_layer_inner").append(liElement);
+	                }
+	            } else {
+	                for (var i = 0; i < artistData.length; i++) {
+	                    var liElement = new $Element("<li>");
+	                    var aElement = new $Element("<a>");
+	                    aElement.attr("href", "https://blog.naver.com/" + artistData[i].nickname);
+	                    aElement.attr("target", "_blank");
+	                    aElement.html("&lt;" + artistData[i].nickname + "&gt;의 블로그")
+
+	                    liElement.append(aElement);
+	                    $Element("author_layer_inner").append(liElement);
+                        blogCount++;
+	                }
+
+                    if (blogCount == 0) {
+                        var liElement = new $Element("<li>");
+                        var aElement = new $Element("<a>");
+                        aElement.html("등록된 블로그가 없습니다.");
+
+                        liElement.append(aElement);
+                        $Element("author_layer_inner").append(liElement);
+                    }
+	            }
+	            artistLayer.show(element);
+	            return false;
+        	}
+        },
+
+        artistFanCafe : function(element) {
+        	var fancafeUrl = 'https://cafe.naver.com/nicedrawingday';
+            $Element("author_layer_inner").html("");
+            $Element("author_layer").css("border", "");
+            $Element("author_layer_inner").css("border", "1px solid #b6b6b6");
+
+			var liElement = new $Element("<li>");
+			var aElement = new $Element("<a>");
+
+			if (null != fancafeUrl && '' != fancafeUrl) {
+				aElement.attr("href", "https://cafe.naver.com/nicedrawingday");
+				aElement.attr("target", "_blank");
+				aElement.html("팬카페 바로가기")
+			} else {
+				aElement.attr("href", "javascript:request_fancafe()");
+				aElement.html("팬카페 등록하기");
+			}
+			liElement.append(aElement);
+			$Element("author_layer_inner").append(liElement);
+            artistLayer.show(element);
+            return false;
+        }
+	});
+
+	function request_fancafe() {
+		
+		
+		if ( !isLogin)
+		{
+			if ( !confirm('로그인 해야 이용할 수 있습니다. 로그인 하겠습니까?'))
+				return ;
+
+			document.request_fancafe_form.refresh.value = "true";
+		}
+		var form = document.request_fancafe_form;
+		nwin=open("about:blank", "request_fancafe", "top=10,left=10,toolbar=no,location=0,directories=0,status=yes,menubar=0,scrollbars=no,resizable=0,width=500,height=296");
+
+		form.target = "request_fancafe";
+		nwin.blur();
+
+
+		nwin.focus();
+		form.submit() ;
+		
+	}
+
+	function loadThisWindow () {
+		// 해당 페이지 정보(별점 ajax 호출 시 필요한 정보들)
+		var oStarInfo = {
+			"titleId" : 703852
+			, "no" : 68
+			, "token" : 'eyJhbGciOiJIUzI1NiJ9.eyJ0aXRsZUlkIjo3MDM4NTIsIm5vIjo2OCwiaWRObyI6IiJ9.gGi5E_ZoGf97qoDoSdc4OqVhCv69805I9HWgB3SfL6g'
+		}
+	 	new StarScorePoll(isLogin, oStarInfo);
+	 	new FreeComicShowHideEventRegister(newButtonObject);
+
+		//$Element("tagBox").css("position","relative");
+		//$Element("tagBox").css("zIndex","100");
+
+		if(artistData.length > 1) {
+	 		$Element("btn_group").addClass("btn_lst");
+	 		$Element("other_content").className("other2");
+		}
+
+		if (false)
+		{
+			$Element("comic_before").css("visibility","hidden");
+		}
+		if (true)
+		{
+			$Element("comic_after").css("visibility","hidden");
+		}
+
+		new NavigationBar(navi_init,"/navigationToJson.nhn?ln=WEBTOON&titleId=703852&weekday=tue&articleCount=0");
+	   	new ExtraRemover();
+		$('commentIframe').src = sCommentUrl;
+
+        // 이미지 실제 위치
+        webtoonContentActualTopMargin = $Element($Element('comic_view_area').query('img')).offset().top ;
+
+		// 웹툰 PPL
+	
+
+        // flex 빅배너 & PPL : 웹툰 PPL이 있을 경우, 미노출되어야 함
+	
+		var oflexVideoAd = new FlexVideoAd();
+		new FlexAd('703852', '', oflexVideoAd, '');
+	
+
+		// 초기값 체크
+		eraseCookie("top");
+		eraseCookie("left");
+
+		// 리모콘 객체 생성
+		var remocon = new RemoconComic("comicRemocon");
+		var drag = new Drag("comicRemocon", remocon, remocon._getRemoconPos[1], remocon._getRemoconPos[1]);
+
+		// 포텐업 버튼 이벤트
+		if (jindo.$("potenupAreaBtn")) {
+			jindo.$Fn(function(oEvent) {
+				oEvent.stopDefault();
+				jindo.$Element("potenupAreaBtn").toggleClass('on');
+			}).attach($("potenupAreaBtn"), "click").attach($("potenupAreaCloseBtn"), "click");
+		}
+	}
+
+	function goUp(){
+	    var max = $Element('comic_view_area').offset().top;
+	    window.scrollTo(0,0);
+	}
+
+	function goDown(){
+    	var max =  $Element('comic_view_area').first().height();
+	    window.scrollTo(0,max-($Element("comicRemocon").height()));
+    }
+
+	function doComicReport() {
+		var isNaverLogin = false;
+
+		if (!isNaverLogin) {
+			if (confirm('로그인 해야 이용할 수 있습니다. 로그인 하시겠습니까?')) {
+				location.href = 'https://nid.naver.com/nidlogin.login?mode=form&url=' + encodeURIComponent(location.href);
+			}
+		} else {
+			var form = document.reportForm;
+			var request_report = open("about:blank", "request_report", "top=10,left=10,toolbar=no,location=0,directories=0,status=yes,menubar=0,scrollbars=no,resizable=0,width=606,height=491");
+			form.target = "request_report";
+			form.submit();
+		}
+	}
+
+	$Fn(loadThisWindow).attach(window,"load");
+
+	actionRunner = new WebtoonArtistActionRunner("703852");
+
+	
+
+	/**
+	 * 시리즈로 이동 가능한지 확인해서 이동
+	 *
+	 * @params nbooksId {String} 북스 상품 ID
+	 */
+	function moveBookstore(nbooksId) {
+		var result;
+
+        $Ajax('https://series.naver.com/isService.jsonp', {
+			type : 'jsonp',
+			method : 'get',
+            callbackname: 'callback',
+			onload : function(oRes) {
+				result = oRes.json().result;
+			}
+		}).request({
+			'productTypeCode' : 'COMIC',
+			'originalProductId' : nbooksId
+		});
+
+		
+		var oInterval = setInterval(function() {
+            if (result == 'true') {
+                window.open('https://series.naver.com/comic/detail.nhn?originalProductId=' + nbooksId, '_blank');
+            } else {
+                alert('시리즈에 상품을 등록 중입니다. 잠시만 기다려주세요.');
+            }
+            clearInterval(oInterval);
+            oInterval = null;
+		}, 200);
+	}
+</script> 
+<script type="text/javascript">
+function toogleAlert() {
+	var alertToolTip = $("alertToolTip");
+	if(alertToolTip.style.display == "none") {
+		alertToolTip.style.display = "block";
+	} else {
+		alertToolTip.style.display = "none";
+	}
+}
+
+</script> 
+<script type="text/javascript">
+
+	var g_ssc = "decide.me";
+	var levelName = "WEBTOON";
+	if(levelName == "BEST_CHALLENGE"){
+        g_ssc = "comic.best_detail";
+	}else if(levelName == "CHALLENGE"){
+        g_ssc = "comic.chal_detail";
+	}else if(levelName == "WEBTOON"){
+        g_ssc = "comic.toon_detail";
+	}
+	var ccsrv = "cc.naver.com";
+</script> 
+<script type="text/javascript">
+function getInitialParams() {
+
+	return {
+        style  : "standard",
+        text   : "black",
+        evkey  : "cartoon",
+        title  : "바른연애 길잡이 - 68",
+        url : location.protocol + "//comic.naver.com/webtoon/detail.nhn?titleId=703852&no=68",
+        //me2key : "cRHMQWAXT9iVoryGm_eKJQ",
+        tags   : ["웹툰", "만화", "바른연애 길잡이"],
+        me : {
+            display : "off"
+        },
+        mail : {
+            display : "off"
+        },
+        cafe : {
+            sourceType : "111",
+            sourceTitle : "만화 > 바른연애 길잡이 > 68 | 남수",
+            sourceForm : "2"
+        },
+        blog : {
+            blogId : "naver",
+            sourceType : "111",
+            sourceTitle : "만화 > 바른연애 길잡이 > 68 | 남수",
+            sourceForm : "2"
+        },
+        likeServiceId : "COMIC",	// 좋아요 서비스 아이디
+        likeContentsId : "703852_68"	// 좋아요 컨텐츠 아이디
+    };
+}
+
+socialPlugin.init("https://ssl.pstatic.net/spi/js/release");
+</script> 
+<script type="text/javascript">
+	
+	
+
+	function callWebAdBannerView(sStatsUrl) {
+		var self = this;
+		var nTimestamp = new Date().getTime();
+
+		var oAjax = new $Ajax(sStatsUrl + '&_dummy='+nTimestamp, {
+			type : "xhr",
+			method : "get",
+			timeout : 3,
+			async : false
+		}).request();
+	}
+
+	function callWebAdBannerClick(sStatsUrl, sTargetUrl) {
+		var self = this;
+		var nTimestamp = new Date().getTime();
+
+		var oAjax = new $Ajax(sStatsUrl + '&_dummy='+nTimestamp, {
+			type : "xhr",
+			method : "get",
+			onload : function(res) {
+				window.open(sTargetUrl, '_blank');
+			},
+			timeout : 3,
+			async : false
+		}).request();
+	}
+</script> 
+<script type="text/javascript">
+			var agent = navigator.userAgent.toLowerCase();
+
+			function loadEvent(){
+				try{
+					getGNB();
+				}catch(ex){
+
+				}
+				new naver.comic.RealtimeRankLayer();
+				if ( $("uploadLinkId") ){
+					$Fn(function(oEvent) {
+						oEvent.stop();
+						if ("true" != "false") {
+							if (!confirm('로그인해야 이용할 수 있습니다. 로그인 하겠습니까?'))
+								return false;
+							else {
+								location.href = "https://nid.naver.com/nidlogin.login?mode=form&url="
+										+ encodeURIComponent("https://" + location.host
+												+ "/upload/upload.nhn");
+								return;
+							}
+						}
+						location.href = "/upload/upload.nhn";
+						return true;
+					}).attach($("uploadLinkId"),"click");
+				}
+				naver.comic.oArtistAction = new naver.comic.Artist();
+				artistAction = naver.comic.oArtistAction;
+				naver.comic.oSearchBar = new naver.comic.SearchBarOptionActHandler();
+
+				// GNB 이벤트 재정의.
+				$Fn(function(oEvent){
+					var aWtChild = $Element("gnb" ).child(function (v){return true;});
+					var wtSrc = $Element(oEvent.element);
+					var bContain = false;
+					for (var i = 0 ; i < aWtChild.length ;i++){
+						if ( aWtChild[i].$value() == wtSrc.$value()){
+							bContain = true;
+							break;
+						}
+					}
+					if ( !bContain && gnbAllLayerClose ){
+						gnbAllLayerClose();
+
+					}
+
+				}).attach(document,"click");
+			}
+			$Fn(loadEvent).attach(window,'load');
+		</script> 
+<script src="/aggregate/javascript/release/lcslog_20190627181237.js" type="text/javascript"></script> 
+<script type="text/javascript">
+    try {
+        var eventType = "onpageshow" in window ? "onpageshow" : "onload";
+        var oldEvent = window[eventType];
+        window[eventType] = function() {
+            if (oldEvent) {
+                oldEvent();
+            }
+            lcs_do();
+        };
+    } catch(ex) { }
+</script> 

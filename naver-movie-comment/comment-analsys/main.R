@@ -52,6 +52,7 @@ comment_str <- paste(unlist(comment_list$cmt), collapse='')
 words <- sapply(comment_str, extractNoun, USE.NAMES = F)
 # filter over 15
 words_filtered <- Filter(function(x) {nchar(x) <= 15}, words)
+words_filtered <- Filter(function(x) {nchar(x) >= 2}, words)
 words_filtered <- str_replace_all(words_filtered, "[^[:alpha:]]", "")  # 한글, 영어외는 삭제
 
 words_filtered <- gsub("영화", "", words_filtered)
@@ -83,13 +84,13 @@ table_words <- table(read_filtered_words)
 # show word numbers : 17087
 nrow(table_words)
 
-head(sort(table_words, decreasing=T), 20)
+head(sort(table_words, decreasing=T), 50)
 # top 200 words 
 
 wordcount <- head(sort(table_words,decreasing=T), 50)
 
 #default wordcloud
-# wordcloud2(wordcount)
+wordcloud2(wordcount)
 
 # wordcloud2(demoFreq, figPath = "./img/cpt1.png", size = 1.5, color = "skyblue")
 

@@ -40,7 +40,7 @@ def main():
     base_url = 'https://movie.naver.com//movie/bi/mi/pointWriteFormList.nhn?code=132623&type=after&page='
     
     # 3607
-    for page_num in range(1, 10):
+    for page_num in range(1, 700):
         html = get_html(base_url + str(page_num))
         cmt_dict_list = get_cmt_dict_list(html)
         cmt_dict_list_data.extend(cmt_dict_list)
@@ -48,7 +48,7 @@ def main():
         url = base_url + str(page_num)
 
     try:
-        with open('./movie_comment.csv', 'w', encoding='utf-8') as file:
+        with open('./movie_comment_700.csv', 'w', encoding='UTF-8') as file:
             writer = csv.DictWriter(file, fieldnames=csv_columns)
             writer.writeheader()
             for data in cmt_dict_list_data:

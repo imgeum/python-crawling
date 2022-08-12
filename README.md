@@ -1,3 +1,5 @@
-# python-crawl
+# naver movie reivew crawl
 
 네이버 영화 댓글, 평점을 크롤링하는 레포지토리
+
+빅데이터를 활용한 스마트데이터 전문가 양성과정 중 진행한 프로젝트
